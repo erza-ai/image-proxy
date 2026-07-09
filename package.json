@@ -1,0 +1,7 @@
+{
+  "name": "image-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Token-protected image proxy (Vercel Edge / Deno Deploy) used as a fallback by erza-api's image proxy."
+}

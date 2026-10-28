@@ -1,6 +1,6 @@
 # image-proxy
 
-Same file (`api/api.js`) runs on **Vercel Edge Functions** and **Deno Deploy**.
+Same file (`api/api.js`) runs on **Cloudflare Workers**, **Deno Deploy**, **Netlify**, and **Vercel Edge Functions**.
 
 ## API
 
@@ -16,7 +16,9 @@ GET <base>?url=<url-encoded image url>&token=<secret>
 
 ```
 api/api.js      the proxy function
-vercel.json     rewrites "/" -> "/api/api" so the base URL is the bare domain
+wrangler.jsonc   Cloudflare Workers configuration
+netlify.toml    Netlify configuration (rewrites "/" -> "/.netlify/functions/api")
+vercel.json     Vercel configuration (rewrites "/" -> "/api/api")
 package.json    type: module
 ```
 
@@ -35,5 +37,19 @@ Base URL: `https://<app>.vercel.app` (the `vercel.json` rewrite maps `/` to the 
 deployctl deploy --entrypoint api/api.js --prod
 ```
 Set env `PROXY_TOKEN` in the Deno Deploy dashboard. Base URL: `https://<project>.deno.dev`
+
+### Cloudflare Workers
+```bash
+npx wrangler secret put PROXY_TOKEN  # enter secret when prompted
+npx wrangler deploy
+```
+Base URL: `https://<worker-name>.<subdomain>.workers.dev`
+
+### Netlify
+```bash
+netlify env:set PROXY_TOKEN <secret>
+netlify deploy --prod
+```
+Base URL: `https://<site-name>.netlify.app`
 
 Deploy a few (different providers/regions) for resilience — each is one pool entry.

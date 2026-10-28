@@ -1,18 +1,30 @@
-const PROXY_TOKEN =
-  (typeof process !== "undefined" && process.env && process.env.PROXY_TOKEN) ||
-  (typeof Deno !== "undefined" && Deno.env.get("PROXY_TOKEN")) ||
-  "";
+function getToken(env) {
+  if (env && typeof env.PROXY_TOKEN === "string") {
+    return env.PROXY_TOKEN;
+  }
+  if (typeof process !== "undefined" && process?.env?.PROXY_TOKEN) {
+    return process.env.PROXY_TOKEN;
+  }
+  if (typeof Deno !== "undefined" && Deno?.env?.get) {
+    return Deno.env.get("PROXY_TOKEN") || "";
+  }
+  if (typeof Netlify !== "undefined" && Netlify?.env?.get) {
+    return Netlify.env.get("PROXY_TOKEN") || "";
+  }
+  return "";
+}
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 const ACCEPT = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8";
 
-export default async function handler(request) {
+export async function handler(request, env) {
   const { searchParams } = new URL(request.url);
   const target = searchParams.get("url");
   const token = searchParams.get("token");
+  const proxyToken = getToken(env);
 
-  if (!PROXY_TOKEN || token !== PROXY_TOKEN) {
+  if (!proxyToken || token !== proxyToken) {
     return new Response("forbidden", { status: 403 });
   }
   if (!target) {
@@ -54,9 +66,13 @@ export default async function handler(request) {
   });
 }
 
+export default {
+  fetch: handler,
+};
+
 export const config = { runtime: "edge" }; // Vercel Edge (ignored elsewhere)
 
-// Deno Deploy: start a server. No-op on Vercel (no Deno global).
-if (typeof Deno !== "undefined") {
+// Deno Deploy / local Deno: start a server when executed directly.
+if (typeof Deno !== "undefined" && typeof Netlify === "undefined") {
   Deno.serve(handler);
 }
